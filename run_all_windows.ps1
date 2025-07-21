@@ -51,7 +51,9 @@ Start-Sleep -Seconds 2
 
 # 7. Launch FastAPI uvicorn
 Write-Host "Launching the FastAPI app on port 6872..."
-Start-Process -FilePath "poetry" -ArgumentList "run", "fastapi", "dev", "app/api/main.py", "--host", "0.0.0.0", "--port", "6872"
+# Start-Process -FilePath "poetry" -ArgumentList "run", "fastapi", "dev", "app/api/main.py", "--host", "0.0.0.0", "--port", "6872"
+#Start-Process -FilePath "poetry" -ArgumentList "run", "fastapi", "dev", "app/api/main.py", "--host", "0.0.0.0", "--port", "6872"
+Start-Process -FilePath "poetry" -ArgumentList "run", "uvicorn", "app.api.main:app", "--host", "0.0.0.0", "--port", "6872", "--reload"
 
 # Time for FastAPI to start
 Start-Sleep -Seconds 5
@@ -75,4 +77,4 @@ Start-Process -FilePath "poetry" -ArgumentList "run", "streamlit", "run", "app/w
 
 # 10. Log address for registration
 Write-Host "Your address for registration is:"
-Write-Host "http://$remote_host:$random_port"
+Write-Host "http://${remote_host}:${random_port}"

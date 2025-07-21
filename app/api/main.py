@@ -1,36 +1,35 @@
-from fastapi import FastAPI
+import requests
+from fastapi import FastAPI, Request
 from pydantic import BaseModel
-from uuid import UUID, uuid4
-from transformers import pipeline
+
 
 app = FastAPI()
 
-# Load the zero-shot model once at startup
-classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
+@app.post("/get_message")
+async def get_message(request: Request):
+    body = await request.json()
+    prompt = body["prompt"]
 
+    # Send to LLM server
+    res = requests.post("http://llm:11434/api/generate", json={
+        "model": "orca-mini",
+        "prompt": prompt,
+        "stream": False
+    })
+
+    reply = res.json()["response"]
+    return {"response": reply}
 class PredictionRequest(BaseModel):
-    text: str
-    dialog_id: UUID
-    id: UUID
+    id: str
+    dialog_id: str
     participant_index: int
+    text: str
 
 class PredictionResponse(BaseModel):
-    id: UUID
-    message_id: UUID
-    dialog_id: UUID
-    participant_index: int
     is_bot_probability: float
 
 @app.post("/predict", response_model=PredictionResponse)
 def predict(request: PredictionRequest):
-    candidate_labels = ["bot", "human"]
-    result = classifier(request.text, candidate_labels)
-    bot_score = result["scores"][result["labels"].index("bot")]
-
-    return PredictionResponse(
-        id=request.id,
-        message_id=uuid4(),
-        dialog_id=request.dialog_id,
-        participant_index=request.participant_index,
-        is_bot_probability=bot_score
-    )
+    # Dummy logic: just generate a random probability
+    prob = random.uniform(0.0, 1.0)
+    return {"is_bot_probability": prob}

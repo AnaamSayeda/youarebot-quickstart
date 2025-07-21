@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+
+  mlflow:
+    image: ghcr.io/mlflow/mlflow
+    ports:
+      - "5050:5000"
+    environment:
+      MLFLOW_TRACKING_URI: http://mlflow:5050
+    volumes:
+      - ./mlruns:/mlflow/mlruns
+    command: mlflow server --backend-store-uri sqlite:///mlflow.db --default-artifact-root /mlflow/mlruns --host 0.0.0.0
+
+  classifier:
+    build:
+      context: .
+      dockerfile: Dockerfile.classifier
+    depends_on:
+      - mlflow
+    environment:
+      MLFLOW_TRACKING_URI: http://mlflow:5050
+    ports:
+      - "8000:8000"
+
+  llm:
+    image: ollama/ollama
+    ports:
+    - "11434:11434"
+    volumes:
+    - ollama:/root/.ollama
+    command: serve
+
+
+
+  orchestrator:
+    build:
+      context: .
+      dockerfile: Dockerfile.orchestrator
+    ports:
+      - "6872:8000"
+    depends_on:
+      - classifier
+      - llm
+
+volumes:
+  ollama:
